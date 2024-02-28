@@ -20,7 +20,7 @@ SEEDS = [
     arv: 340_000,
     first_name: 'Dana',
     last_name: 'Whitfield',
-    email: 'dana@ridgelinehomes.co',
+    email: 'dana@ridgeline.example',
     phone: '(919) 555-0142'
   },
   {
@@ -32,7 +32,7 @@ SEEDS = [
     arv: 615_000,
     first_name: 'Marcus',
     last_name: 'Oyelaran',
-    email: 'marcus@sawtoothcapital.co',
+    email: 'marcus@sawtooth.example',
     phone: '(828) 555-0119'
   },
   {
@@ -44,7 +44,7 @@ SEEDS = [
     arv: 585_000,
     first_name: 'Priya',
     last_name: 'Raghunathan',
-    email: 'priya@harlowbuild.co',
+    email: 'priya@harlow.example',
     phone: '(984) 555-0173'
   }
 ].freeze

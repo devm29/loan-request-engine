@@ -96,8 +96,8 @@ RSpec.describe LoanRequest, type: :model do
     # The old unique index on email allowed an applicant exactly one request,
     # ever. The fingerprint expresses the intent properly.
     it 'lets the same applicant ask about a second property' do
-      create(:loan_request, email: 'dana@ridgelinehomes.co', address: '1420 Chestnut Ridge Rd')
-      second = build(:loan_request, email: 'dana@ridgelinehomes.co', address: '88 Sawtooth Ave')
+      create(:loan_request, email: 'dana@ridgeline.example', address: '1420 Chestnut Ridge Rd')
+      second = build(:loan_request, email: 'dana@ridgeline.example', address: '88 Sawtooth Ave')
 
       expect(second).to be_valid
     end

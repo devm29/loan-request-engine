@@ -19,7 +19,7 @@ class UserMailerPreview < ActionMailer::Preview
       product_code: Lending::Catalog.default_code, loan_term: 6,
       purchase_price: 215_000, repair_budget: 48_000, arv: 340_000,
       first_name: 'Dana', last_name: 'Whitfield',
-      email: 'dana@ridgelinehomes.co', phone: '(919) 555-0142'
+      email: 'dana@ridgeline.example', phone: '(919) 555-0142'
     )
   end
 end

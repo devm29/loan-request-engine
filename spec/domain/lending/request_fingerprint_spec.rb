@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe Lending::RequestFingerprint do
   def fingerprint(**overrides)
     described_class.for(
-      email: 'dana@ridgelinehomes.co', address: '1420 Chestnut Ridge Rd, Durham, NC',
+      email: 'dana@ridgeline.example', address: '1420 Chestnut Ridge Rd, Durham, NC',
       product_code: 'fix_and_flip', loan_term: 6, purchase_price: 215_000,
       repair_budget: 48_000, arv: 340_000, **overrides
     )
@@ -17,7 +17,7 @@ RSpec.describe Lending::RequestFingerprint do
   end
 
   it 'ignores case and surrounding whitespace in the email' do
-    expect(fingerprint(email: '  Dana@RidgelineHomes.CO ')).to eq(fingerprint)
+    expect(fingerprint(email: '  Dana@Ridgeline.EXAMPLE ')).to eq(fingerprint)
   end
 
   it 'ignores repeated whitespace in the address' do

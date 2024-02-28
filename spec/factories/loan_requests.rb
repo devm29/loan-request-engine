@@ -12,7 +12,7 @@ FactoryBot.define do
     arv { 340_000 }
     first_name { 'Dana' }
     last_name { 'Whitfield' }
-    sequence(:email) { |n| "dana#{n}@ridgelinehomes.co" }
+    sequence(:email) { |n| "dana#{n}@ridgeline.example" }
     phone { '(919) 555-0142' }
 
     trait :rendered do
