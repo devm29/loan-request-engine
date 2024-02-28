@@ -3,8 +3,9 @@
 # Three realistic requests, one per product, so the application is not empty on
 # first boot and every branch of the pricing logic is visible:
 #
-#   * Chestnut Ridge  - the ARV cap binds (the exit valuation is the limit)
-#   * Sawtooth Ave    - the purchase-price cap binds (loan-to-cost is the limit)
+#   * Chestnut Ridge  - the purchase-price cap binds (loan-to-cost is the limit)
+#   * Sawtooth Ave    - the ARV cap binds: a bridge on a property with little
+#                       upside, so the exit valuation is the limit
 #   * Harlow Lot 14   - a ground-up build near the top of its term window
 #
 # Idempotent: re-running it re-uses the existing request rather than creating a
@@ -29,7 +30,7 @@ SEEDS = [
     loan_term: 9,
     purchase_price: 410_000,
     repair_budget: 22_000,
-    arv: 615_000,
+    arv: 480_000,
     first_name: 'Marcus',
     last_name: 'Oyelaran',
     email: 'marcus@sawtooth.example',
