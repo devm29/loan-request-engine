@@ -11,8 +11,6 @@ gem 'rails', '~> 6.1.0'
 gem 'pg', '~> 1.1'
 # Use Puma as the app server
 gem 'puma', '~> 5.0'
-# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.7'
 # Use Redis adapter to run Action Cable in production
 # gem 'redis', '~> 4.0'
 # Use Active Model has_secure_password
@@ -33,9 +31,9 @@ gem 'tailwindcss-rails'
 # Import maps serve the Stimulus controllers as ES modules: no Node toolchain.
 gem 'importmap-rails'
 
-# PDF generation
+# PDF generation. wkhtmltopdf itself comes from the system (WKHTMLTOPDF_PATH);
+# the Docker image installs the upstream wkhtmltox build.
 gem 'wicked_pdf'
-gem 'wkhtmltopdf-binary'
 
 # Request throttling on the public, unauthenticated form.
 gem 'rack-attack'
@@ -68,15 +66,13 @@ group :development do
 
   # Email preview in development
   gem 'letter_opener'
+
+  # A wkhtmltopdf for machines without one. It carries binaries for every
+  # platform, so it stays out of the image and the test bundle.
+  gem 'wkhtmltopdf-binary'
 end
 
 group :test do
-  # Adds support for Capybara system testing and selenium driver
-  gem 'capybara', '>= 3.26'
-  gem 'faker'
-  gem 'selenium-webdriver'
-  # Easy installation and use of web drivers to run system tests with browsers
-  gem 'webdrivers'
   gem 'webmock'
 end
 
