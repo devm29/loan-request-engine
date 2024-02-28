@@ -42,7 +42,7 @@ RSpec.describe Lending::TermSheetRenderer do
   end
 
   # The application layout needs a live request (CSRF and CSP meta tags,
-  # Webpacker helpers) that a background job does not have, and would nest a
+  # import map tags) that a background job does not have, and would nest a
   # second <html> document inside the term sheet.
   it 'does not wrap the term sheet in the application layout' do
     described_class.call(loan_request)

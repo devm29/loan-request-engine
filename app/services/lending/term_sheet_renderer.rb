@@ -5,7 +5,7 @@ module Lending
   #
   # Rendered without a layout: the term sheet template is a complete HTML
   # document, and the application layout needs a live request (CSRF/CSP meta
-  # tags, Webpacker helpers) that a background job does not have.
+  # tags, import map tags) that a background job does not have.
   module TermSheetRenderer
     TEMPLATE = 'loan_requests/termsheet'
 

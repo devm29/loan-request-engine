@@ -30,7 +30,8 @@ gem 'sidekiq'
 # Tailwind CSS for styling
 gem 'tailwindcss-rails'
 
-gem 'webpacker'
+# Import maps serve the Stimulus controllers as ES modules: no Node toolchain.
+gem 'importmap-rails'
 
 # PDF generation
 gem 'wicked_pdf'

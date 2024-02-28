@@ -182,13 +182,12 @@ sheet email lands in Mailpit at http://localhost:8283; PostgreSQL is on `8281`
 > pulling an amd64 `wkhtmltox` `.deb` onto arm64, so that default is gone. The application
 > itself was verified end to end *without* Docker, which produced the screenshots above.
 
-Locally, without containers — Ruby 3.1.3, PostgreSQL, Redis, Node 18+, Yarn:
+Locally, without containers — Ruby 3.1.3, PostgreSQL and Redis. There is no Node step:
 
 ```bash
-bundle install && yarn install
+bundle install
 bin/rails db:prepare db:seed
 bin/rails tailwindcss:build
-bin/rails webpacker:compile          # NODE_OPTIONS=--openssl-legacy-provider on Node 18+
 bundle exec sidekiq -C config/sidekiq.yml &
 bin/rails server -p 8280
 ```
@@ -262,7 +261,7 @@ app/services/lending/     # thin, Rails-aware use cases — submit_loan_request.
                           #   explainer.rb (registry, guard, fallback), explainers/claude.rb
 app/jobs/                 # loan_processor_job.rb — render, store, email, idempotently
 app/models/               # loan_request.rb — persistence and validation only
-app/javascript/           # Stimulus 2 — form stepping and status polling
+app/javascript/           # Stimulus 3 over import maps — form stepping and status polling
 config/lending_products.yml    # the products. A new product is an entry here.
 spec/domain/                   # the arithmetic specification
 ```

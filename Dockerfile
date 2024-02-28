@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 
-# Multi-stage build. The runtime image carries no compiler, no Node and no
-# JavaScript toolchain: webpack, the Tailwind CLI and the native gem extensions
-# all run in the builder and only their output is copied forward.
+# Multi-stage build. The runtime image carries no compiler: the Tailwind CLI
+# and the native gem extensions run in the builder and only their output is
+# copied forward. JavaScript ships as import-mapped ES modules, so neither
+# stage needs Node.
 
 ARG RUBY_VERSION=3.1.3
 
 # ---------------------------------------------------------------------------
-# Builder: gems, packs, stylesheets
+# Builder: gems and stylesheets
 # ---------------------------------------------------------------------------
 FROM ruby:${RUBY_VERSION}-slim-bullseye AS builder
 
 ENV RAILS_ENV=production \
-    NODE_ENV=production \
     BUNDLE_DEPLOYMENT=1 \
     BUNDLE_WITHOUT=development:test \
     BUNDLE_PATH=/usr/local/bundle
@@ -31,14 +31,9 @@ RUN apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=5 update -qq
     && apt-get install --no-install-recommends -y \
       build-essential \
       ca-certificates \
-      curl \
       git \
-      gnupg \
       libpq-dev \
       pkg-config \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install --no-install-recommends -y nodejs \
-    && npm install --global yarn@1.22.19 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -48,19 +43,13 @@ COPY Gemfile Gemfile.lock ./
 RUN bundle install --jobs 4 --retry 3 \
     && rm -rf "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
-COPY package.json ./
-RUN yarn install --frozen-lockfile --check-files || yarn install
-
 COPY . .
 
-# webpack 4 uses an MD4 hash that OpenSSL 3 removed; Node's legacy provider is
-# the documented workaround and is confined to this build step.
 # SECRET_KEY_BASE is a throwaway: asset compilation boots the app, but the real
 # key is supplied at runtime from the environment.
-RUN NODE_OPTIONS=--openssl-legacy-provider \
-    SECRET_KEY_BASE=precompile_placeholder \
+RUN SECRET_KEY_BASE=precompile_placeholder \
     bundle exec rails assets:precompile \
-    && rm -rf node_modules tmp/cache
+    && rm -rf tmp/cache
 
 # ---------------------------------------------------------------------------
 # Runtime
