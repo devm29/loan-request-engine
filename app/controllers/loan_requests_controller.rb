@@ -34,17 +34,20 @@ class LoanRequestsController < ApplicationController
                'Loan request was successfully created.'
              end
 
+    # `flash`, not `flash.now`: the message has to survive the redirect to be
+    # seen at all.
     respond_to do |format|
-      flash.now[:notice] = notice
-      format.html { redirect_to destination }
+      format.html { redirect_to destination, notice: notice }
       format.json { render json: { redirect_url: destination, reference: @loan_request.reference }, status: :ok }
     end
   end
 
   def respond_failure
     respond_to do |format|
-      flash.now[:alert] = 'Loan Request could not be saved.'
-      format.html { redirect_to root_path }
+      format.html do
+        redirect_to root_path,
+                    alert: "Loan request could not be saved: #{@loan_request.errors.full_messages.to_sentence}."
+      end
       format.json do
         render json: { errors: @loan_request.errors.full_messages }, status: :unprocessable_entity
       end
