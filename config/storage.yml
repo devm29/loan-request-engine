@@ -1,0 +1,17 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Generated term sheets belong in object storage, not on the disk of whichever
+# container rendered them. Select this with ACTIVE_STORAGE_SERVICE=amazon; the
+# aws-sdk-s3 gem is already in the Gemfile.
+amazon:
+  service: S3
+  access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
+  region: <%= ENV.fetch("AWS_REGION", "us-east-1") %>
+  bucket: <%= ENV["AWS_S3_BUCKET"] %>

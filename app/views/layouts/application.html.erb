@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html class="h-full">
+  <head>
+    <title><%= content_for(:title).presence || "Longleaf Lending" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Hard-money term sheets for fix &amp; flip, bridge and new construction projects.">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= javascript_pack_tag 'application', 'data-turbolinks-track': 'reload' %>
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag 'application', media: 'all' %>
+  </head>
+
+  <body class="h-full bg-stone-100 font-sans text-slate-800 antialiased">
+    <div class="pointer-events-none fixed inset-x-0 top-0 z-50 flex flex-col items-center gap-2 p-4" data-controller="flash">
+      <% flash.each do |key, message| %>
+        <div class="flash pointer-events-auto w-full max-w-md rounded-lg border px-4 py-3 text-sm font-medium shadow-lg <%= flash_class_for(key) %>">
+          <%= message %>
+        </div>
+      <% end %>
+    </div>
+
+    <%= yield %>
+
+    <footer class="border-t border-stone-200 bg-white">
+      <div class="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <p>Longleaf Lending &middot; sample term sheets, not an offer of credit.</p>
+        <p>All figures are estimates and subject to underwriting.</p>
+      </div>
+    </footer>
+  </body>
+</html>

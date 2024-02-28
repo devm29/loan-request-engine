@@ -1,0 +1,27 @@
+{
+  "name": "loan_app",
+  "private": true,
+  "dependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@babel/plugin-proposal-object-rest-spread": "^7.14.7",
+    "@babel/plugin-proposal-private-methods": "^7.14.5",
+    "@babel/plugin-proposal-private-property-in-object": "^7.14.5",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-destructuring": "^7.14.7",
+    "@babel/plugin-transform-regenerator": "^7.14.5",
+    "@babel/plugin-transform-runtime": "^7.14.5",
+    "@babel/preset-env": "^7.14.7",
+    "@rails/webpacker": "5.4.4",
+    "babel-plugin-dynamic-import-node": "^2.3.3",
+    "babel-plugin-macros": "^3.1.0",
+    "postcss-flexbugs-fixes": "^5.0.2",
+    "postcss-import": "^14.0.2",
+    "postcss-preset-env": "^6.7.0",
+    "stimulus": "^2.0.0",
+    "webpack": "^4.46.0",
+    "webpack-cli": "^3.3.12"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^3.11.3"
+  }
+}

@@ -1,0 +1,7 @@
+---
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 5) %>
+:queues:
+  # Term sheet rendering is the only work this app queues. Naming the queue
+  # keeps it separable if anything else is ever added.
+  - term_sheets
+  - default

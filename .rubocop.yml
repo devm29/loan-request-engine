@@ -1,0 +1,165 @@
+require:
+  - rubocop-rails
+  - rubocop-performance
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'bin/**/*'
+    - 'db/schema.rb'
+    - 'node_modules/**/*'
+    - 'project_venv/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
+
+# ---------------------------------------------------------------------------
+# Layout and style
+# ---------------------------------------------------------------------------
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'db/migrate/*'
+
+# Generated Rails boilerplate is documented by Rails, not by us.
+Style/Documentation:
+  Exclude:
+    - 'config/**/*'
+    - 'db/**/*'
+
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - 'config/**/*'
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+  Exclude:
+    - 'config/**/*'
+
+# RSpec's own generated harness.
+Style/BlockComments:
+  Exclude:
+    - 'spec/spec_helper.rb'
+
+# Single-locale application. Moving eight flash strings into a locale file
+# would add indirection without adding a second language.
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+# ---------------------------------------------------------------------------
+# Size
+# ---------------------------------------------------------------------------
+
+Metrics/AbcSize:
+  Max: 25
+  Exclude:
+    # The deterministic explainer is a list of sentences about a quote: its
+    # size is the number of figures a borrower is shown, not tangled logic, and
+    # splitting it would scatter one paragraph across five methods.
+    - 'app/domain/lending/explainers/*'
+    # One guard per attribute, read top to bottom.
+    - 'app/domain/lending/product.rb'
+    - 'app/services/lending/explainer.rb'
+    - 'db/migrate/*'
+
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - 'db/migrate/*'
+    - 'spec/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'config/**/*'
+    - 'lib/tasks/*.rake'
+
+Metrics/ClassLength:
+  Max: 150
+
+# Keyword arguments carry their own names, so the ordering hazard this cop
+# guards against does not apply: Lending::RequestFingerprint.for takes seven
+# because a fingerprint is made of seven facts.
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+# ---------------------------------------------------------------------------
+# Rails idioms that do not apply here
+# ---------------------------------------------------------------------------
+
+# Lending::Catalog is a plain Ruby registry, not a relation: `all.each` there
+# is not the ActiveRecord idiom these cops describe.
+Rails/FindEach:
+  Exclude:
+    - 'lib/tasks/*.rake'
+    - 'spec/**/*'
+Rails/RedundantActiveRecordAllMethod:
+  Exclude:
+    - 'lib/tasks/*.rake'
+    - 'spec/**/*'
+    - 'app/helpers/**/*'
+
+# Seeds and rake tasks print to stdout deliberately: that output is the point
+# of running them.
+Rails/Output:
+  Exclude:
+    - 'db/seeds.rb'
+    - 'lib/tasks/*.rake'
+
+# Migrations are a historical record. Formatting them is harmless, but
+# restructuring one changes what already ran, so the structural cops are off
+# here. The backfill skips validations deliberately: the model's callbacks
+# assume the schema the migration is on its way to creating.
+Rails/BulkChangeTable:
+  Exclude:
+    - 'db/migrate/*'
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'db/migrate/*'
+Rails/CreateTableWithTimestamps:
+  Exclude:
+    - 'db/migrate/*'
+
+# The app predates Rails 7; these cops propose APIs it does not have.
+Rails/ThreeStateBooleanColumn:
+  Enabled: false
+Rails/EnvironmentVariableAccess:
+  Enabled: false
+
+# Money is constructed from decimal strings everywhere in this application on
+# purpose: BigDecimal(0.13) is a Float literal and exactly the defect the
+# domain refuses. Writing BigDecimal('193500') beside BigDecimal('0.13') keeps
+# one habit rather than two.
+Performance/BigDecimalWithNumericArgument:
+  Enabled: false
+
+# ---------------------------------------------------------------------------
+# Specs
+# ---------------------------------------------------------------------------
+
+# Specs read better as long, flat descriptions of behaviour than as deeply
+# factored code.
+RSpec/ExampleLength:
+  Max: 20
+RSpec/MultipleExpectations:
+  Max: 8
+RSpec/NestedGroups:
+  Max: 4
+RSpec/MessageSpies:
+  Enabled: false
+RSpec/StubbedMock:
+  Enabled: false
+
+# Doubles in specs implement a backend contract; the unused keyword is part of
+# that contract and naming it documents it.
+Lint/UnusedMethodArgument:
+  Exclude:
+    - 'spec/**/*'
+
+# Used once, to simulate a unique-index violation racing the read before it.
+RSpec/AnyInstance:
+  Exclude:
+    - 'spec/services/lending/submit_loan_request_spec.rb'
