@@ -5,7 +5,8 @@ The server prices it against a lending product, shows them the figures immediate
 background worker renders a term sheet PDF and emails it.
 
 No login, no dashboard, no admin area — the whole product is one form, the term sheet page it
-redirects to, and the async pipeline in between. Rails 6.1, PostgreSQL, Sidekiq, `wkhtmltopdf`.
+redirects to, and the async pipeline in between. Rails 6.1, PostgreSQL, Sidekiq, `wkhtmltopdf`,
+and three Stimulus controllers served through import maps, so there is no Node build anywhere.
 
 ## The arithmetic is the point
 
@@ -60,9 +61,15 @@ an exact decimal.
 
 ## What a borrower sees
 
-**The form** — seven steps, one question at a time, priced by the server at the end.
+**The form** — seven steps, one question at a time, priced by the server at the end. Each step
+change moves focus to the new step's heading and updates a `progressbar`, so it is not silent
+to a screen reader.
 
 ![The loan request form](docs/screenshots/01-loan-request-form.png)
+
+On a phone the form comes straight after the pitch; the product list moves into the form itself.
+
+<img src="docs/screenshots/01-loan-request-form-mobile.png" alt="The loan request form at phone width" width="300">
 
 **The review step.** The browser does no arithmetic: it posts to `POST /quotes` and renders what
 comes back, so the preview and the PDF cannot disagree.
@@ -70,13 +77,16 @@ comes back, so the preview and the PDF cannot disagree.
 ![The server-priced quote](docs/screenshots/02-server-priced-quote.png)
 
 **The term sheet page.** Figures instantly, recomputed from the stored request rather than
-waited on. Only the download waits for the worker, and the page polls (every 2s, up to 45
-attempts) instead of asking the borrower to refresh.
+waited on. Only the download waits for the worker: until the PDF is attached the button is
+`aria-disabled` and out of the tab order, and the page polls (every 2s, up to 45 attempts)
+instead of asking the borrower to refresh. This capture is that waiting state.
 
 ![The term sheet page](docs/screenshots/03-term-sheet-page.png)
 
+<img src="docs/screenshots/03-term-sheet-page-mobile.png" alt="The term sheet page at phone width" width="300">
+
 **The PDF**, rendered by `wkhtmltopdf` inside the worker and emailed as an attachment — this
-screenshot is the real generated document.
+screenshot is a real generated document, from before the seed addresses moved to `.example`.
 
 ![The generated term sheet PDF](docs/screenshots/04-generated-term-sheet-pdf.png)
 
@@ -172,15 +182,18 @@ and seeding so the worker cannot race it. The form is at http://localhost:8280 a
 sheet email lands in Mailpit at http://localhost:8283; PostgreSQL is on `8281`
 (`longleaf` / `longleaf`) and Redis on `8282`. `docker compose down -v` drops the volume.
 
-> **Docker status, stated plainly.** This repo's own build report records **Build verified:
-> NOT RUN — deferred, RAM constraint** and **Boot verified: NOT RUN — deferred, RAM
-> constraint**, with `docker compose config` parsing OK. A partial build before that
-> deferral did fix two real defects still visible in the Dockerfile: Debian
-> `bullseye-security` now indexes packages its pool no longer carries, so `apt-get install`
-> 404s — hence the commented-out `snapshot.debian.org` source the base image ships for this
-> case being enabled — and `ARG TARGETARCH=amd64` defeated BuildKit's automatic value,
-> pulling an amd64 `wkhtmltox` `.deb` onto arm64, so that default is gone. The application
-> itself was verified end to end *without* Docker, which produced the screenshots above.
+Copy `.env.example` to `.env` if you want a real `SECRET_KEY_BASE` or the generated narrative;
+every variable in it is optional.
+
+> **Docker status, stated plainly.** The image has no Node stage any more, so the build is
+> two apt layers, `bundle install` and `assets:precompile`. Both apt layers have been built:
+> Debian 11 is now served from the `snapshot.debian.org` source the base image ships (the
+> live `bullseye-security` index 404s), and the runtime stage installs the upstream
+> `wkhtmltox` `.deb` for whichever architecture BuildKit targets and checks it with
+> `wkhtmltopdf --version`. The full `docker compose up --build` has not yet been run to
+> completion end to end. What the screenshots show was produced by the same Ruby, gems,
+> `assets:precompile`, `db:prepare` and `db:seed`, running in production mode against
+> PostgreSQL in containers.
 
 Locally, without containers — Ruby 3.1.3, PostgreSQL and Redis. There is no Node step:
 
@@ -192,13 +205,14 @@ bundle exec sidekiq -C config/sidekiq.yml &
 bin/rails server -p 8280
 ```
 
-`wkhtmltopdf` is required — there is no PDF without it. It comes from the
-`wkhtmltopdf-binary` gem, and `WKHTMLTOPDF_PATH` points at a system binary instead. In
-development mail opens in a browser tab via `letter_opener`, with previews at
-`/rails/mailers`.
+`wkhtmltopdf` is required — there is no PDF without it. The development bundle includes the
+`wkhtmltopdf-binary` gem; anywhere else, point `WKHTMLTOPDF_PATH` at a system binary (the
+Docker image installs the upstream `wkhtmltox` build). In development mail opens in a browser
+tab via `letter_opener`, with previews at `/rails/mailers`.
 
 ```bash
-bundle exec rspec                        # 274 examples
+bin/rails tailwindcss:build              # the layout links the built stylesheet, so build it first
+bundle exec rspec                        # 287 examples
 bundle exec rubocop
 bin/rails lending:products               # print the catalog as the app reads it
 bin/rails lending:requeue_stalled        # re-enqueue undelivered requests
@@ -206,6 +220,58 @@ bin/rails lending:requeue_stalled        # re-enqueue undelivered requests
 
 The suite needs PostgreSQL and nothing else: it stubs the queue, the renderer and the mailer, and
 `WebMock` refuses every non-localhost connection, so **no test can make a real API call.**
+
+## The quote endpoint
+
+The review step is a plain JSON call, captured here from the running app (the bridge seed,
+where the after-repair value is the binding cap). It needs the page's CSRF token, like any
+other form post.
+
+```http
+POST /quotes
+Content-Type: application/json
+X-CSRF-Token: <from the page's csrf-token meta tag>
+
+{"quote": {"product_code": "bridge", "loan_term": 9,
+           "purchase_price": "410000", "repair_budget": "22000", "arv": "480000"}}
+```
+
+```json
+{
+  "quote": {
+    "product_code": "bridge",
+    "term_months": 9,
+    "purchase_price_cap": "328000.0",
+    "arv_cap": "312000.0",
+    "max_fundable_amount": "312000.0",
+    "binding_constraint": "arv",
+    "interest_expense": "26910.0",
+    "cash_required": "120000.0",
+    "formatted": { "max_fundable_amount": "$312,000.00", "interest_expense": "$26,910.00", "...": "..." }
+  },
+  "explanation": {
+    "headline": "We can fund $312,000.00 on this Bridge request.",
+    "bullets": [
+      "80% of the $410,000.00 purchase price is $328,000.00.",
+      "65% of the $480,000.00 after-repair value is $312,000.00.",
+      "The lower of the two caps applies, so the loan is $312,000.00.",
+      "You bring the remaining $120,000.00 of the $432,000.00 project cost.",
+      "Interest at 11.5% a year over 9 months is $26,910.00, so $338,910.00 is repayable at exit."
+    ],
+    "narrative": "The after-repair value is what limits this loan. ...",
+    "source": "rules"
+  }
+}
+```
+
+Amounts travel as decimal strings, never JSON numbers, so nothing on the way can turn them into
+floats. A term outside the product's window is refused the same way the submit refuses it:
+
+```http
+HTTP/1.1 422 Unprocessable Entity
+
+{"errors": ["Bridge runs from 3 to 24 months."]}
+```
 
 ## Configuration
 
@@ -294,7 +360,9 @@ product's own window, and a database check constraint (`loan_term_range`) wide e
 every product offered.
 
 **Rate limiting** via `rack-attack`: 5/minute per IP on `POST /loan_requests`, 30/minute on
-`POST /quotes`, since every successful submission spawns a PDF process and sends mail. **`/up`
+`POST /quotes`, since every successful submission spawns a PDF process and sends mail. The
+throttles match the route pattern rather than the literal path, because `/loan_requests.json`
+and `/loan_requests/` reach the same action; `spec/requests/rate_limiting_spec.rb` holds both. **`/up`
 touches the database**, so a process that booted but lost its connection reports unhealthy
 instead of lying to the orchestrator.
 
@@ -313,3 +381,7 @@ instead of lying to the orchestrator.
 - **No Sidekiq web UI is mounted.** It would need authentication in front of it first.
 - **The generated narrative is English only**, and the numeric guard's token rules assume `$` and
   `%`. A second currency or locale needs both revisited.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
