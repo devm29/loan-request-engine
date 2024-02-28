@@ -8,14 +8,20 @@
 # that a script cannot fill the queue.
 Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
+# Matched as the router matches: /loan_requests, /loan_requests/ and
+# /loan_requests.json all reach the same action, so comparing the path for
+# equality would leave the throttle one file extension away from a bypass.
+LOAN_REQUESTS_PATH = %r{\A/loan_requests/?(?:\.\w+)?\z}
+QUOTES_PATH = %r{\A/quotes/?(?:\.\w+)?\z}
+
 Rack::Attack.throttle('loan_requests/ip', limit: 5, period: 1.minute) do |request|
-  request.ip if request.post? && request.path == '/loan_requests'
+  request.ip if request.post? && request.path.match?(LOAN_REQUESTS_PATH)
 end
 
 # Quote previews are cheap and fire as the borrower reaches the review step, so
 # this only needs to stop a scraper.
 Rack::Attack.throttle('quotes/ip', limit: 30, period: 1.minute) do |request|
-  request.ip if request.post? && request.path == '/quotes'
+  request.ip if request.post? && request.path.match?(QUOTES_PATH)
 end
 
 Rack::Attack.throttled_responder = lambda do |_request|
