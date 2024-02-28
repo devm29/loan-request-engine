@@ -93,6 +93,23 @@ RSpec.describe QuotesController, type: :controller do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it "rejects a term outside the product's window, naming the window" do
+      post_quote(loan_term: 30)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['errors']).to eq(['Fix & Flip runs from 1 to 12 months.'])
+    end
+
+    it "checks the term against the chosen product's own window" do
+      post_quote(product_code: 'bridge', loan_term: 2)
+      expect(response.parsed_body['errors']).to eq(['Bridge runs from 3 to 24 months.'])
+    end
+
+    it 'prices a term at the edge of the window' do
+      post_quote(product_code: 'bridge', loan_term: 24)
+      expect(response).to have_http_status(:ok)
+    end
+
     it 'answers 400 when the quote key is missing' do
       post :create, format: :json, params: {}
       expect(response).to have_http_status(:bad_request)

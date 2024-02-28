@@ -9,6 +9,10 @@
 class QuotesController < ApplicationController
   rescue_from ActionController::ParameterMissing, with: :render_parameter_missing
 
+  # The preview refuses what the submit would refuse, so a borrower is never
+  # shown figures for a term the product does not offer.
+  class TermOutsideProduct < ArgumentError; end
+
   def create
     quote = Lending::Quote.new(
       product: product,
@@ -17,6 +21,7 @@ class QuotesController < ApplicationController
       arv: money(:arv),
       term_months: Integer(quote_params[:loan_term].to_s)
     )
+    raise TermOutsideProduct unless quote.term_within_product_range?
 
     render json: {
       quote: presented(quote),
@@ -75,6 +80,9 @@ class QuotesController < ApplicationController
 
   def preview_error_message(error)
     return 'That is not a product we offer.' if error.is_a?(Lending::Catalog::UnknownProduct)
+    if error.is_a?(TermOutsideProduct)
+      return "#{product.name} runs from #{product.min_term_months} to #{product.max_term_months} months."
+    end
 
     'We could not price that. Check the figures and try again.'
   end
