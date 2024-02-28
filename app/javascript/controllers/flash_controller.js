@@ -6,7 +6,7 @@ export default class extends Controller {
       setTimeout(() => {
         flash.style.transition = 'opacity 0.5s';
         flash.style.opacity = '0';
-      }, 3000); 
+      }, 3000);
 
       flash.addEventListener('transitionend', () => {
         flash.remove();

@@ -1,30 +1,30 @@
 <% content_for :title, "Your term sheet — Longleaf Lending" %>
 
-<div class="mx-auto max-w-3xl px-6 py-12"
+<div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12"
      data-controller="term-sheet"
      data-term-sheet-status-url-value="<%= term_sheet_status_path(@loan_request.reference) %>"
      data-term-sheet-ready-value="<%= @loan_request.term_sheet.attached? %>">
 
   <div class="flex items-center gap-2.5">
-    <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">LL</span>
-    <span class="text-base font-semibold tracking-tight text-slate-900">Longleaf Lending</span>
+    <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 font-serif text-sm font-bold text-white" aria-hidden="true">LL</span>
+    <span class="font-serif text-lg font-semibold tracking-tight text-slate-900">Longleaf Lending</span>
   </div>
 
   <header class="mt-8">
-    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+    <p class="break-words text-xs font-semibold uppercase tracking-wide text-emerald-800">
       <%= @loan_request.product.name %> &middot; reference <%= @loan_request.reference %>
     </p>
-    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+    <h1 class="mt-2 font-serif text-2xl font-bold text-slate-900 sm:text-3xl">
       <%= @explanation.headline %>
     </h1>
     <p class="mt-2 text-sm text-slate-600"><%= @loan_request.address %></p>
   </header>
 
   <section class="mt-8 rounded-2xl border border-stone-200 bg-white shadow-sm">
-    <div class="border-b border-stone-200 px-7 py-5">
+    <div class="border-b border-stone-200 px-5 py-4 sm:px-7 sm:py-5">
       <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Your figures</h2>
     </div>
-    <dl class="divide-y divide-stone-100 px-7">
+    <dl class="divide-y divide-stone-100 px-5 sm:px-7">
       <% [
            ["Purchase price", money(@quote.purchase_price), false],
            ["Repair budget", money(@quote.repair_budget), false],
@@ -44,8 +44,8 @@
     </dl>
   </section>
 
-  <section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-7 py-6">
-    <div class="flex items-center justify-between gap-4">
+  <section class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-5 sm:px-7 sm:py-6">
+    <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
       <h2 class="text-sm font-semibold uppercase tracking-wide text-emerald-800">How we got there</h2>
       <span class="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
         <%= @explanation.generated? ? "Narrative drafted by Claude, figures by our lending engine" : "Figures and narrative by our lending engine" %>
@@ -59,11 +59,11 @@
     </ul>
   </section>
 
-  <section class="mt-6 rounded-2xl border border-stone-200 bg-white px-7 py-6 shadow-sm">
+  <section class="mt-6 rounded-2xl border border-stone-200 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-sm font-semibold text-slate-900">Your term sheet PDF</h2>
-        <p class="mt-1 text-sm text-slate-500" data-term-sheet-target="message">
+        <p class="mt-1 text-sm text-slate-600" data-term-sheet-target="message" role="status" aria-live="polite">
           <% if @loan_request.delivered? %>
             Emailed to <%= @loan_request.email %>.
           <% elsif @loan_request.term_sheet.attached? %>
@@ -76,7 +76,8 @@
 
       <a data-term-sheet-target="download"
          href="<%= term_sheet_document_path(@loan_request.reference) %>"
-         class="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 <%= 'pointer-events-none opacity-40' unless @loan_request.term_sheet.attached? %>">
+         <% unless @loan_request.term_sheet.attached? %>aria-disabled="true" tabindex="-1"<% end %>
+         class="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 <%= 'pointer-events-none opacity-40' unless @loan_request.term_sheet.attached? %>">
         Download PDF
       </a>
     </div>
@@ -85,6 +86,6 @@
   <p class="mt-8 text-xs leading-relaxed text-slate-500">
     This term sheet is an estimate produced from the figures you supplied. It is not an
     offer of credit and nothing here has been underwritten.
-    <%= link_to "Price another property", root_path, class: "font-medium text-emerald-700 underline underline-offset-2" %>.
+    <%= link_to "Price another property", root_path, class: "rounded font-medium text-emerald-800 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2" %>.
   </p>
 </div>

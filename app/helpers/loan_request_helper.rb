@@ -30,7 +30,7 @@ module LoanRequestHelper
       STEPS.first(total_steps).each_with_index.map do |label, index|
         content_tag(:span, label,
                     class: "step-#{index + 1} text-[11px] font-medium uppercase tracking-wide " \
-                           'text-slate-400 transition-colors',
+                           'text-slate-500 transition-colors',
                     data: { step_index: index + 1 })
       end
     )

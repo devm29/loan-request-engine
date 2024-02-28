@@ -55,6 +55,8 @@ export default class extends Controller {
   markReady(status) {
     if (this.hasDownloadTarget) {
       this.downloadTarget.classList.remove("pointer-events-none", "opacity-40")
+      this.downloadTarget.removeAttribute("aria-disabled")
+      this.downloadTarget.removeAttribute("tabindex")
     }
     this.setMessage(
       status === "delivered"

@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
 // a borrower sees before submitting are produced by exactly the same code that
 // produces the term sheet afterwards.
 export default class extends Controller {
-  static targets = ["step", "input", "product", "term", "review", "stepNumber", "termHint", "progress", "back", "forward", "errors"]
+  static targets = ["step", "input", "product", "term", "review", "stepNumber", "termHint", "progress", "progressTrack", "back", "forward", "errors"]
   static values = { currentStep: Number, quoteUrl: String, products: Object }
 
   connect() {
@@ -22,6 +22,7 @@ export default class extends Controller {
     if (nextStep <= this.stepTargets.length) {
       this.setCurrentStep(nextStep)
       this.showCurrentStep()
+      this.focusCurrentHeading()
     } else {
       this.submitForm()
     }
@@ -33,7 +34,15 @@ export default class extends Controller {
     if (previousStep >= 1) {
       this.setCurrentStep(previousStep)
       this.showCurrentStep()
+      this.focusCurrentHeading()
     }
+  }
+
+  // Moving focus to the new step's heading tells a screen reader user that the
+  // panel changed, and puts keyboard users at the top of it.
+  focusCurrentHeading() {
+    const heading = this.stepTargets[this.currentStep() - 1]?.querySelector("h3")
+    if (heading) heading.focus()
   }
 
   // Validate every input inside the step being left, not just the one whose
@@ -65,13 +74,17 @@ export default class extends Controller {
       const isCurrent = index === currentStep
       const isDone = index < currentStep
       element.classList.toggle("text-emerald-700", isCurrent)
-      element.classList.toggle("text-slate-600", isDone && !isCurrent)
-      element.classList.toggle("text-slate-400", !isCurrent && !isDone)
+      element.classList.toggle("text-slate-700", isDone && !isCurrent)
+      element.classList.toggle("text-slate-500", !isCurrent && !isDone)
     })
 
     if (this.hasStepNumberTarget) this.stepNumberTarget.textContent = String(currentStep)
     if (this.hasProgressTarget) {
       this.progressTarget.style.width = `${Math.round((currentStep / lastStep) * 100)}%`
+    }
+    if (this.hasProgressTrackTarget) {
+      this.progressTrackTarget.setAttribute("aria-valuenow", String(currentStep))
+      this.progressTrackTarget.setAttribute("aria-valuetext", `Step ${currentStep} of ${lastStep}`)
     }
 
     if (this.hasForwardTarget) {
@@ -99,6 +112,7 @@ export default class extends Controller {
   async loadQuote() {
     if (!this.hasReviewTarget) return
     this.reviewTarget.innerHTML = this.placeholder("Pricing your request…")
+    this.reviewTarget.setAttribute("aria-busy", "true")
 
     const payload = {
       product_code: this.selectedProductCode(),
@@ -126,6 +140,8 @@ export default class extends Controller {
       this.reviewTarget.innerHTML = this.placeholder(
         "We could not reach the pricing service. You can still submit your request."
       )
+    } finally {
+      this.reviewTarget.setAttribute("aria-busy", "false")
     }
   }
 
@@ -155,7 +171,7 @@ export default class extends Controller {
       .join("")
 
     const bullets = (data.explanation.bullets || [])
-      .map((bullet) => `<li class="flex gap-2"><span class="text-emerald-700">&bull;</span><span>${escapeHtml(bullet)}</span></li>`)
+      .map((bullet) => `<li class="flex gap-2"><span class="text-emerald-700" aria-hidden="true">&bull;</span><span>${escapeHtml(bullet)}</span></li>`)
       .join("")
 
     this.reviewTarget.innerHTML = `

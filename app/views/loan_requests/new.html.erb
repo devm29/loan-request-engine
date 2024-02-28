@@ -1,15 +1,15 @@
 <% content_for :title, "Longleaf Lending — Request a term sheet" %>
 
-<div class="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:py-16">
+<div class="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 gap-10 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:py-16">
 
   <aside class="flex flex-col justify-between">
     <div>
       <div class="flex items-center gap-2.5">
-        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">LL</span>
-        <span class="text-base font-semibold tracking-tight text-slate-900">Longleaf Lending</span>
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 font-serif text-sm font-bold text-white" aria-hidden="true">LL</span>
+        <span class="font-serif text-lg font-semibold tracking-tight text-slate-900">Longleaf Lending</span>
       </div>
 
-      <h1 class="mt-8 text-3xl font-bold leading-tight tracking-tight text-slate-900 lg:text-4xl">
+      <h1 class="mt-8 font-serif text-3xl font-bold leading-tight text-slate-900 lg:text-4xl">
         A term sheet for your next project.
       </h1>
       <p class="mt-4 text-sm leading-relaxed text-slate-600">
@@ -17,7 +17,8 @@
         show you the numbers, and email you a signed-off term sheet as a PDF.
       </p>
 
-      <dl class="mt-8 space-y-4 border-t border-stone-200 pt-6">
+      <%# The form lists the same products, so on a phone this would only push it below the fold. %>
+      <dl class="mt-8 hidden space-y-4 border-t border-stone-200 pt-6 lg:block">
         <% Lending::Catalog.all.each do |product| %>
           <div>
             <dt class="text-sm font-semibold text-slate-900">
@@ -33,7 +34,7 @@
       </dl>
     </div>
 
-    <p class="mt-10 text-xs leading-relaxed text-slate-500">
+    <p class="mt-6 text-xs leading-relaxed text-slate-500 lg:mt-10">
       Every figure you will see is calculated by our lending engine in exact decimal
       arithmetic. Nothing is estimated in your browser.
     </p>
@@ -48,29 +49,32 @@
 
       <div class="flex flex-col rounded-2xl border border-stone-200 bg-white shadow-sm">
 
-        <header class="border-b border-stone-200 px-8 py-6">
+        <header class="border-b border-stone-200 px-5 py-5 sm:px-8 sm:py-6">
           <div class="flex items-baseline justify-between">
-            <h2 class="text-lg font-semibold tracking-tight text-slate-900">Loan request</h2>
+            <h2 class="font-serif text-xl font-semibold text-slate-900">Loan request</h2>
             <p class="text-xs font-medium text-slate-500">
               Step <span data-loan-request-form-target="stepNumber">1</span> of <%= form_steps.length %>
             </p>
           </div>
 
-          <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+          <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-stone-200"
+               role="progressbar" aria-label="Form progress" aria-valuemin="1"
+               aria-valuemax="<%= form_steps.length %>" aria-valuenow="1"
+               data-loan-request-form-target="progressTrack">
             <div data-loan-request-form-target="progress" class="progress-bar h-full rounded-full bg-emerald-600 transition-all duration-300" style="width: 14%"></div>
           </div>
-          <div class="mt-2.5 flex justify-between">
+          <div class="mt-2.5 hidden justify-between sm:flex" aria-hidden="true">
             <%= render_steps %>
           </div>
         </header>
 
-        <div data-loan-request-form-target="errors" class="empty:hidden border-b border-red-200 bg-red-50 px-8 py-4 text-sm text-red-800"></div>
+        <div data-loan-request-form-target="errors" role="alert" class="empty:hidden border-b border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 sm:px-8"></div>
 
-        <div class="px-8 py-8">
+        <div class="px-5 py-6 sm:px-8 sm:py-8">
 
           <%# Step 1 — property and product %>
           <div data-loan-request-form-target="step">
-            <h3 class="text-base font-semibold text-slate-900">Which property, and which product?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">Which property, and which product?</h3>
             <p class="mt-1 text-sm text-slate-500">Start with the address and the kind of financing you need.</p>
 
             <div class="mt-6 space-y-5">
@@ -108,7 +112,7 @@
 
           <%# Step 2 — term %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">How long do you need the money?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">How long do you need the money?</h3>
             <p class="mt-1 text-sm text-slate-500">Whole months. The window depends on the product you picked.</p>
             <div class="mt-6">
               <%= form.label :loan_term, "Loan term (months)", class: "block text-sm font-medium text-slate-700" %>
@@ -121,12 +125,12 @@
 
           <%# Step 3 — purchase price %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">What are you paying for it?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">What are you paying for it?</h3>
             <p class="mt-1 text-sm text-slate-500">Include any assignment fee. This sets the loan-to-cost cap.</p>
             <div class="mt-6">
               <%= form.label :purchase_price, "Purchase price", class: "block text-sm font-medium text-slate-700" %>
               <div class="relative mt-2">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500" aria-hidden="true">$</span>
                 <%= form.number_field :purchase_price, required: true, min: 1, step: 1, placeholder: "215000",
                       class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
                       data: { loan_request_form_target: "input" } %>
@@ -136,12 +140,12 @@
 
           <%# Step 4 — repair budget %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">What will the rehab cost?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">What will the rehab cost?</h3>
             <p class="mt-1 text-sm text-slate-500">The full budget to get the property to its finished condition.</p>
             <div class="mt-6">
               <%= form.label :repair_budget, "Estimated repair budget", class: "block text-sm font-medium text-slate-700" %>
               <div class="relative mt-2">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500" aria-hidden="true">$</span>
                 <%= form.number_field :repair_budget, required: true, min: 1, step: 1, placeholder: "48000",
                       class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
                       data: { loan_request_form_target: "input" } %>
@@ -151,12 +155,12 @@
 
           <%# Step 5 — ARV %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">What will it be worth when you are done?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">What will it be worth when you are done?</h3>
             <p class="mt-1 text-sm text-slate-500">The after-repair value. This sets the loan-to-value cap.</p>
             <div class="mt-6">
               <%= form.label :arv, "After-repair value", class: "block text-sm font-medium text-slate-700" %>
               <div class="relative mt-2">
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-500" aria-hidden="true">$</span>
                 <%= form.number_field :arv, required: true, min: 1, step: 1, placeholder: "340000",
                       class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
                       data: { loan_request_form_target: "input" } %>
@@ -166,7 +170,7 @@
 
           <%# Step 6 — contact details %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">Where should we send the term sheet?</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">Where should we send the term sheet?</h3>
             <p class="mt-1 text-sm text-slate-500">We email the PDF and show it to you on the next screen.</p>
 
             <div class="mt-6 grid gap-5 sm:grid-cols-2">
@@ -184,7 +188,7 @@
               </div>
               <div>
                 <%= form.label :email, "Email", class: "block text-sm font-medium text-slate-700" %>
-                <%= form.email_field :email, required: true, autocomplete: "email", placeholder: "dana@ridgelinehomes.co",
+                <%= form.email_field :email, required: true, autocomplete: "email", placeholder: "dana@ridgeline.example",
                       class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
                       data: { loan_request_form_target: "input" } %>
               </div>
@@ -199,22 +203,22 @@
 
           <%# Step 7 — review, priced by the server %>
           <div data-loan-request-form-target="step" class="hidden">
-            <h3 class="text-base font-semibold text-slate-900">Your quote</h3>
+            <h3 class="font-serif text-lg font-semibold text-slate-900 focus:outline-none" tabindex="-1">Your quote</h3>
             <p class="mt-1 text-sm text-slate-500">Priced against our lending policy. Submit to receive it as a PDF.</p>
 
-            <div class="mt-6" data-loan-request-form-target="review">
+            <div class="mt-6" data-loan-request-form-target="review" aria-live="polite" aria-busy="false">
               <p class="rounded-lg bg-stone-100 px-4 py-6 text-center text-sm text-slate-500">Pricing your request…</p>
             </div>
           </div>
         </div>
 
-        <footer class="flex items-center justify-between border-t border-stone-200 px-8 py-5">
+        <footer class="flex items-center justify-between border-t border-stone-200 px-5 py-4 sm:px-8 sm:py-5">
           <button type="button" data-loan-request-form-target="back" data-action="loan-request-form#previousStep"
-                  class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-stone-100 disabled:opacity-40">
+                  class="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-stone-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
             Back
           </button>
           <button type="button" data-loan-request-form-target="forward" data-action="loan-request-form#nextStep"
-                  class="rounded-lg bg-emerald-700 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:opacity-60">
+                  class="rounded-lg bg-emerald-700 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
             Next
           </button>
         </footer>
