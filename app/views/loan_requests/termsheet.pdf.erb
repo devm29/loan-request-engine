@@ -1,0 +1,90 @@
+<%
+  quote = loan_request.quote
+  product = loan_request.product
+  explanation = local_assigns.fetch(:explanation) { loan_request.explanation_for_display }
+%>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Loan Request Term Sheet</title>
+    <%= wicked_pdf_stylesheet_link_tag "tailwind" %>
+  </head>
+  <body class="bg-white p-10 text-slate-800">
+
+    <div class="flex items-center justify-between border-b-2 border-emerald-800 pb-5">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-emerald-900">Loan Request Term Sheet</h1>
+        <p class="mt-1 text-sm text-slate-500">Longleaf Lending &middot; <%= product.name %></p>
+      </div>
+      <div class="text-right text-xs text-slate-500">
+        <p>Reference <span class="font-semibold text-slate-700"><%= loan_request.reference %></span></p>
+        <p><%= loan_request.created_at&.strftime("%-d %B %Y") %></p>
+      </div>
+    </div>
+
+    <%# A table, not a grid: wkhtmltopdf renders on an older WebKit that has no
+        CSS grid support and would stack these two columns on top of each other. %>
+    <table class="mt-8 w-full">
+      <tr>
+        <td class="w-1/2 align-top pr-6">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Property</h2>
+          <p class="mt-2 text-sm font-medium text-slate-900"><%= loan_request.address %></p>
+          <p class="mt-1 text-sm text-slate-600">Term: <%= months(quote.term_months) %></p>
+        </td>
+        <td class="w-1/2 align-top pl-6">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Applicant</h2>
+          <p class="mt-2 text-sm font-medium text-slate-900"><%= loan_request.full_name %></p>
+          <p class="mt-1 text-sm text-slate-600"><%= loan_request.email %></p>
+          <p class="text-sm text-slate-600"><%= loan_request.phone %></p>
+        </td>
+      </tr>
+    </table>
+
+    <div class="mt-8 rounded-lg border border-emerald-200 bg-emerald-50 p-5">
+      <p class="text-base font-semibold text-emerald-900"><%= explanation.headline %></p>
+      <p class="mt-1 text-sm leading-relaxed text-emerald-800"><%= explanation.narrative %></p>
+    </div>
+
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">Figures</h2>
+    <table class="mt-3 w-full text-sm">
+      <tbody>
+        <% [
+             ["Purchase price", money(quote.purchase_price), false],
+             ["Repair budget", money(quote.repair_budget), false],
+             ["Total project cost", money(quote.total_project_cost), false],
+             ["After-repair value (ARV)", money(quote.arv), false],
+             ["#{percentage(product.purchase_price_ltv)} of purchase price", money(quote.purchase_price_cap), false],
+             ["#{percentage(product.arv_ltv)} of ARV", money(quote.arv_cap), false],
+             ["Maximum fundable amount", money(quote.max_fundable_amount), true],
+             ["Cash required from borrower", money(quote.cash_required), false],
+             ["Total interest expense", money(quote.interest_expense), false],
+             ["Repayable at exit", money(quote.total_repayment), false],
+             ["Estimated profit", money(quote.estimated_profit), true]
+           ].each do |label, value, emphasis| %>
+          <tr class="border-b border-slate-100">
+            <td class="py-2 <%= emphasis ? 'font-semibold text-slate-900' : 'text-slate-600' %>"><%= label %></td>
+            <td class="py-2 text-right <%= emphasis ? 'font-semibold text-emerald-800' : 'text-slate-900' %>"><%= value %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">How this was calculated</h2>
+    <ul class="mt-3 space-y-1.5 text-sm text-slate-600">
+      <% explanation.bullets.each do |bullet| %>
+        <li><%= bullet %></li>
+      <% end %>
+    </ul>
+
+    <h2 class="mt-8 text-xs font-semibold uppercase tracking-wide text-slate-500">Terms and conditions</h2>
+    <ol class="mt-3 space-y-1 text-xs leading-relaxed text-slate-600">
+      <li>1. The loan amount can fund at most <%= percentage(product.purchase_price_ltv) %> of the purchase price.</li>
+      <li>2. The loan amount cannot exceed <%= percentage(product.arv_ltv) %> of the after-repair value (ARV).</li>
+      <li>3. Interest is simple interest at <%= percentage(product.annual_interest_rate) %> a year, accrued monthly over the term specified.</li>
+      <li>4. Estimated profit is the ARV less the funded amount and the total interest expense.</li>
+      <li>5. Caps are truncated to the cent so that neither can be exceeded by rounding.</li>
+      <li>6. All values are estimates and subject to final approval. This is not an offer of credit.</li>
+    </ol>
+  </body>
+</html>
