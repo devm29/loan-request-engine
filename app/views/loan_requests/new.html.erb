@@ -1,0 +1,224 @@
+<% content_for :title, "Longleaf Lending — Request a term sheet" %>
+
+<div class="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 gap-10 px-6 py-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:py-16">
+
+  <aside class="flex flex-col justify-between">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">LL</span>
+        <span class="text-base font-semibold tracking-tight text-slate-900">Longleaf Lending</span>
+      </div>
+
+      <h1 class="mt-8 text-3xl font-bold leading-tight tracking-tight text-slate-900 lg:text-4xl">
+        A term sheet for your next project.
+      </h1>
+      <p class="mt-4 text-sm leading-relaxed text-slate-600">
+        Tell us about the property and we will price it against our lending policy,
+        show you the numbers, and email you a signed-off term sheet as a PDF.
+      </p>
+
+      <dl class="mt-8 space-y-4 border-t border-stone-200 pt-6">
+        <% Lending::Catalog.all.each do |product| %>
+          <div>
+            <dt class="text-sm font-semibold text-slate-900">
+              <%= product.name %>
+              <span class="ml-1 font-normal text-slate-500">
+                &middot; up to <%= percentage(product.purchase_price_ltv) %> LTC
+                &middot; <%= percentage(product.annual_interest_rate) %>/yr
+              </span>
+            </dt>
+            <dd class="mt-0.5 text-xs leading-relaxed text-slate-500"><%= product.description %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <p class="mt-10 text-xs leading-relaxed text-slate-500">
+      Every figure you will see is calculated by our lending engine in exact decimal
+      arithmetic. Nothing is estimated in your browser.
+    </p>
+  </aside>
+
+  <main>
+    <%= form_with model: @loan_request, local: false, html: { class: "flex h-full flex-col" },
+                  data: { controller: "loan-request-form",
+                          loan_request_form_current_step_value: 1,
+                          loan_request_form_quote_url_value: quotes_path,
+                          loan_request_form_products_value: product_term_windows.to_json } do |form| %>
+
+      <div class="flex flex-col rounded-2xl border border-stone-200 bg-white shadow-sm">
+
+        <header class="border-b border-stone-200 px-8 py-6">
+          <div class="flex items-baseline justify-between">
+            <h2 class="text-lg font-semibold tracking-tight text-slate-900">Loan request</h2>
+            <p class="text-xs font-medium text-slate-500">
+              Step <span data-loan-request-form-target="stepNumber">1</span> of <%= form_steps.length %>
+            </p>
+          </div>
+
+          <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+            <div data-loan-request-form-target="progress" class="progress-bar h-full rounded-full bg-emerald-600 transition-all duration-300" style="width: 14%"></div>
+          </div>
+          <div class="mt-2.5 flex justify-between">
+            <%= render_steps %>
+          </div>
+        </header>
+
+        <div data-loan-request-form-target="errors" class="empty:hidden border-b border-red-200 bg-red-50 px-8 py-4 text-sm text-red-800"></div>
+
+        <div class="px-8 py-8">
+
+          <%# Step 1 — property and product %>
+          <div data-loan-request-form-target="step">
+            <h3 class="text-base font-semibold text-slate-900">Which property, and which product?</h3>
+            <p class="mt-1 text-sm text-slate-500">Start with the address and the kind of financing you need.</p>
+
+            <div class="mt-6 space-y-5">
+              <div>
+                <%= form.label :address, "Target property", class: "block text-sm font-medium text-slate-700" %>
+                <p class="mt-0.5 text-xs text-slate-500">Address, city, state and ZIP.</p>
+                <%= form.text_field :address, required: true, autocomplete: "street-address",
+                      placeholder: "1420 Chestnut Ridge Rd, Durham, NC 27703",
+                      class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+
+              <fieldset>
+                <legend class="text-sm font-medium text-slate-700">Loan product</legend>
+                <div class="mt-2 grid gap-2">
+                  <% Lending::Catalog.all.each_with_index do |product, index| %>
+                    <label class="block cursor-pointer">
+                      <%= form.radio_button :product_code, product.code,
+                            checked: index.zero?, required: true, class: "peer sr-only",
+                            data: { loan_request_form_target: "input product" } %>
+                      <span class="block rounded-lg border border-stone-300 p-3 transition-colors hover:border-emerald-500 peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-checked:ring-1 peer-checked:ring-emerald-600 peer-focus:ring-2 peer-focus:ring-emerald-500">
+                        <span class="block text-sm font-medium text-slate-900"><%= product.name %></span>
+                        <span class="block text-xs text-slate-500">
+                          <%= percentage(product.purchase_price_ltv) %> of purchase price &middot;
+                          <%= percentage(product.arv_ltv) %> of ARV &middot;
+                          <%= product.min_term_months %>–<%= product.max_term_months %> months
+                        </span>
+                      </span>
+                    </label>
+                  <% end %>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+
+          <%# Step 2 — term %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">How long do you need the money?</h3>
+            <p class="mt-1 text-sm text-slate-500">Whole months. The window depends on the product you picked.</p>
+            <div class="mt-6">
+              <%= form.label :loan_term, "Loan term (months)", class: "block text-sm font-medium text-slate-700" %>
+              <%= form.number_field :loan_term, required: true, min: 1, max: 36, step: 1, placeholder: "6",
+                    class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                    data: { loan_request_form_target: "input term" } %>
+              <p class="mt-2 text-xs text-slate-500" data-loan-request-form-target="termHint"></p>
+            </div>
+          </div>
+
+          <%# Step 3 — purchase price %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">What are you paying for it?</h3>
+            <p class="mt-1 text-sm text-slate-500">Include any assignment fee. This sets the loan-to-cost cap.</p>
+            <div class="mt-6">
+              <%= form.label :purchase_price, "Purchase price", class: "block text-sm font-medium text-slate-700" %>
+              <div class="relative mt-2">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <%= form.number_field :purchase_price, required: true, min: 1, step: 1, placeholder: "215000",
+                      class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+            </div>
+          </div>
+
+          <%# Step 4 — repair budget %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">What will the rehab cost?</h3>
+            <p class="mt-1 text-sm text-slate-500">The full budget to get the property to its finished condition.</p>
+            <div class="mt-6">
+              <%= form.label :repair_budget, "Estimated repair budget", class: "block text-sm font-medium text-slate-700" %>
+              <div class="relative mt-2">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <%= form.number_field :repair_budget, required: true, min: 1, step: 1, placeholder: "48000",
+                      class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+            </div>
+          </div>
+
+          <%# Step 5 — ARV %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">What will it be worth when you are done?</h3>
+            <p class="mt-1 text-sm text-slate-500">The after-repair value. This sets the loan-to-value cap.</p>
+            <div class="mt-6">
+              <%= form.label :arv, "After-repair value", class: "block text-sm font-medium text-slate-700" %>
+              <div class="relative mt-2">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$</span>
+                <%= form.number_field :arv, required: true, min: 1, step: 1, placeholder: "340000",
+                      class: "block w-full rounded-lg border-stone-300 pl-7 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+            </div>
+          </div>
+
+          <%# Step 6 — contact details %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">Where should we send the term sheet?</h3>
+            <p class="mt-1 text-sm text-slate-500">We email the PDF and show it to you on the next screen.</p>
+
+            <div class="mt-6 grid gap-5 sm:grid-cols-2">
+              <div>
+                <%= form.label :first_name, "First name", class: "block text-sm font-medium text-slate-700" %>
+                <%= form.text_field :first_name, required: true, autocomplete: "given-name", placeholder: "Dana",
+                      class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+              <div>
+                <%= form.label :last_name, "Last name", class: "block text-sm font-medium text-slate-700" %>
+                <%= form.text_field :last_name, autocomplete: "family-name", placeholder: "Whitfield",
+                      class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+              <div>
+                <%= form.label :email, "Email", class: "block text-sm font-medium text-slate-700" %>
+                <%= form.email_field :email, required: true, autocomplete: "email", placeholder: "dana@ridgelinehomes.co",
+                      class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+              <div>
+                <%= form.label :phone, "Phone", class: "block text-sm font-medium text-slate-700" %>
+                <%= form.telephone_field :phone, required: true, autocomplete: "tel", placeholder: "(919) 555-0142",
+                      class: "mt-2 block w-full rounded-lg border-stone-300 shadow-sm focus:border-emerald-600 focus:ring-emerald-600 sm:text-sm",
+                      data: { loan_request_form_target: "input" } %>
+              </div>
+            </div>
+          </div>
+
+          <%# Step 7 — review, priced by the server %>
+          <div data-loan-request-form-target="step" class="hidden">
+            <h3 class="text-base font-semibold text-slate-900">Your quote</h3>
+            <p class="mt-1 text-sm text-slate-500">Priced against our lending policy. Submit to receive it as a PDF.</p>
+
+            <div class="mt-6" data-loan-request-form-target="review">
+              <p class="rounded-lg bg-stone-100 px-4 py-6 text-center text-sm text-slate-500">Pricing your request…</p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="flex items-center justify-between border-t border-stone-200 px-8 py-5">
+          <button type="button" data-loan-request-form-target="back" data-action="loan-request-form#previousStep"
+                  class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-stone-100 disabled:opacity-40">
+            Back
+          </button>
+          <button type="button" data-loan-request-form-target="forward" data-action="loan-request-form#nextStep"
+                  class="rounded-lg bg-emerald-700 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:opacity-60">
+            Next
+          </button>
+        </footer>
+      </div>
+    <% end %>
+  </main>
+</div>
