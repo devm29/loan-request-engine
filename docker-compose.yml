@@ -1,0 +1,120 @@
+# One command brings up the whole pipeline:
+#
+#   docker compose up --build
+#
+# web (8280)  -> the public form and the term sheet page
+# mail (8283) -> Mailpit, where the term sheet email actually lands
+#
+# The worker is the point of the stack: PDF rendering never happens in a
+# request. Bring it down with `docker compose down -v`.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: longleaf-lending:local
+  environment: &app_env
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: "1"
+    RAILS_SERVE_STATIC_FILES: "1"
+    # No TLS terminator in front of the compose stack.
+    FORCE_SSL: "false"
+    SECRET_KEY_BASE: "${SECRET_KEY_BASE:-development_only_secret_key_base_replace_in_production}"
+    DATABASE_URL: postgres://longleaf:longleaf@db:5432/longleaf_production
+    REDIS_URL: redis://redis:6379/1
+    APP_HOST: "localhost:8280"
+    SMTP_ADDRESS: mail
+    SMTP_PORT: "1025"
+    SMTP_STARTTLS: "false"
+    MAILER_FROM: term-sheets@longleaf.example
+    # Explanations fall back to the deterministic explainer when this is unset,
+    # so the stack runs identically with or without a key.
+    ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    LENDING_EXPLAINER: "${LENDING_EXPLAINER:-auto}"
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    mail:
+      condition: service_started
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: longleaf
+      POSTGRES_PASSWORD: longleaf
+      POSTGRES_DB: longleaf_production
+    ports:
+      - "8281:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U longleaf -d longleaf_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "8282:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # Where the term sheet email lands. Open http://localhost:8283 after
+  # submitting the form and the PDF attachment is there.
+  mail:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "8283:8025"
+    restart: unless-stopped
+
+  web:
+    <<: *app
+    environment:
+      <<: *app_env
+      # The web container owns the schema; the worker waits for it.
+      PREPARE_DATABASE: "true"
+      SEED_DATABASE: "true"
+    ports:
+      - "8280:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "ruby -e \"require 'net/http'; exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/up')).code == '200' ? 0 : 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  worker:
+    <<: *app
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mail:
+        condition: service_started
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f sidekiq > /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db_data:

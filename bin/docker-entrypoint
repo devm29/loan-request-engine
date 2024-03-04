@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Only the web role prepares the database. The worker waits for it instead of
+# racing it: two processes running migrations against one database is how you
+# get a half-applied schema.
+if [ "${PREPARE_DATABASE}" = "true" ]; then
+  echo "==> Preparing database"
+  ./bin/rails db:prepare
+  if [ "${SEED_DATABASE}" = "true" ]; then
+    echo "==> Seeding"
+    ./bin/rails db:seed
+  fi
+fi
+
+rm -f tmp/pids/server.pid
+
+exec "$@"

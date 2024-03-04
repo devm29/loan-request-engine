@@ -1,0 +1,35 @@
+.git
+.github
+.gitignore
+.rspec
+
+# Dependencies and build output rebuilt inside the image
+node_modules
+project_venv
+public/packs
+public/packs-test
+public/assets
+app/assets/builds/*
+!app/assets/builds/.keep
+
+# Runtime state
+log/*
+tmp/*
+storage/*
+!log/.keep
+!tmp/.keep
+!storage/.keep
+
+# Test and docs artifacts
+spec
+coverage
+docs
+*.md
+!README.md
+
+# Never bake secrets in
+.env
+.env.*
+config/master.key
+
+.DS_Store
